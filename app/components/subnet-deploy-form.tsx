@@ -65,15 +65,20 @@ export function SubnetDeployForm(props: {
   }, []);
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
+    let intervalId: NodeJS.Timeout;
+    const intervalCallback = () => {
       if (props.subnet?._id) {
         console.log("handleSubnet()");
         handleSubnet(props.subnet._id.toString());
       }
-    }, 60 * 1000);
+    };
+    const clearAndSetInterval = () => {
+      clearInterval(intervalId);
+      intervalId = setInterval(intervalCallback, 60 * 1000);
+    };
+    clearAndSetInterval();
     return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [props.subnet?._id]);
 
   return (
     <>
