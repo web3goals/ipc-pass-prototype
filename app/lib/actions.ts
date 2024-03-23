@@ -25,7 +25,7 @@ export async function getLastSubnet(): Promise<Subnet | null> {
 /**
  * Deploy server with subnet to Vultr.
  */
-export async function deploySubnet() {
+export async function deploySubnet(label: string) {
   console.log("deploySubnet()");
   try {
     // Send request to deploy subnet server to Vultr
@@ -34,7 +34,7 @@ export async function deploySubnet() {
       {
         region: "fra",
         plan: "vc2-1c-2gb",
-        snapshot_id: "eccd1ed7-55ac-408c-b611-4fea7b25eace",
+        snapshot_id: "3782bddc-9f1a-4949-8eee-a5e02ceaf519",
         label: "IPC Server",
       },
       {
@@ -45,6 +45,7 @@ export async function deploySubnet() {
     const subnet = new Subnet(
       "DEPLOYING",
       new Date(),
+      label,
       data?.instance?.id,
       undefined,
       "root",

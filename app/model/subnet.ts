@@ -13,6 +13,7 @@ export default class Subnet {
       | "RUNNING"
       | "DELETED",
     public createdTime: Date,
+    public label: string,
     public serverId: string | undefined,
     public serverIp: string | undefined,
     public serverUsername: string | undefined,
