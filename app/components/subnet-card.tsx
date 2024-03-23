@@ -1,5 +1,5 @@
 "use client";
 
-export function Subnet() {
+export function SubnetCard() {
   return <>...</>;
 }

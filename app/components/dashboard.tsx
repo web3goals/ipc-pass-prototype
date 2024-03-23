@@ -1,23 +1,46 @@
 "use client";
 
-import { Subnet } from "./subnet";
+import useError from "@/hooks/useError";
+import { getLastSubnet } from "@/lib/actions";
+import Subnet from "@/model/subnet";
+import { useEffect, useState } from "react";
+import { SubnetCard } from "./subnet-card";
 import { SubnetDeployForm } from "./subnet-deploy-form";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
+import { Skeleton } from "./ui/skeleton";
 import { toast } from "./ui/use-toast";
 
 export function Dashboard() {
-  const subnet = undefined; // TODO: Load subnet from database
+  const { handleError } = useError();
+  const [subnet, setSubnet] = useState<Subnet | null>();
 
-  return subnet ? (
-    <DashboardSubnetDeployed subnet={subnet} />
-  ) : (
-    <DashboardSubnetNotDeployed />
-  );
+  function loadSubnet() {
+    getLastSubnet()
+      .then((subnet) => setSubnet(subnet))
+      .catch((error) => handleError(error, true));
+  }
+
+  useEffect(() => {
+    loadSubnet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (subnet === undefined) {
+    return <Skeleton className="w-full h-[20px] rounded-full" />;
+  } else if (subnet?.status === "RUNNING") {
+    return <DashboardSubnetDeployed subnet={subnet} />;
+  } else {
+    return (
+      <DashboardSubnetNotDeployed
+        subnet={subnet}
+        reloadSubnet={() => loadSubnet()}
+      />
+    );
+  }
 }
 
-// TODO: Use type for subnet
-export function DashboardSubnetDeployed(props: { subnet: any }) {
+export function DashboardSubnetDeployed(props: { subnet: Subnet }) {
   return (
     <>
       <div className="space-y-0.5">
@@ -37,13 +60,16 @@ export function DashboardSubnetDeployed(props: { subnet: any }) {
         >
           Deploy
         </Button>
-        <Subnet />
+        <SubnetCard />
       </div>
     </>
   );
 }
 
-export function DashboardSubnetNotDeployed() {
+export function DashboardSubnetNotDeployed(props: {
+  subnet: Subnet | null;
+  reloadSubnet: () => void;
+}) {
   return (
     <>
       <div className="space-y-0.5">
@@ -51,7 +77,10 @@ export function DashboardSubnetNotDeployed() {
         <p className="text-muted-foreground">Deploy your first IPC subnet</p>
       </div>
       <Separator className="my-6" />
-      <SubnetDeployForm />
+      <SubnetDeployForm
+        subnet={props.subnet}
+        reloadSubnet={props.reloadSubnet}
+      />
     </>
   );
 }
