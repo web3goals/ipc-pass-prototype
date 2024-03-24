@@ -2,7 +2,7 @@
 
 import Subnet from "@/model/subnet";
 import axios from "axios";
-import { ObjectId } from "mongodb";
+import { Collection, ObjectId } from "mongodb";
 import { Client } from "ssh2";
 import clientPromise from "./mongodb";
 
@@ -46,10 +46,25 @@ export async function deploySubnet(label: string) {
       "DEPLOYING",
       new Date(),
       label,
-      data?.instance?.id,
-      undefined,
-      "root",
-      data?.instance?.default_password
+      {
+        id: data?.instance?.id,
+        ip: undefined,
+        username: "root",
+        password: data?.instance?.default_password,
+      },
+      {
+        ethApiHost: undefined,
+        ethApiPort: "8545",
+        chainId: "2194144149880582",
+      },
+      {
+        address: "0xa0cbc2463b7f6149701b7cd4919190686cd55cd1",
+        publicKey:
+          "047829f263908006c0638331fee54622796c805319f10853eae0e9baa0d93e9e5911d689b467acedfbfb2503b2092dbf3e5a450061885859da35a56cb78236fd8c",
+        privateKey:
+          "3d47e22e73f6406804087d082fc28c279785937ca49213db8581ecb9ad0afa38",
+      },
+      [{ ip: undefined, owner: "0xa0cbc2463b7f6149701b7cd4919190686cd55cd1" }]
     );
     await insertModel(subnet);
   } catch (error: any) {
@@ -81,7 +96,7 @@ async function handleDeployingSubnet(subnet: Subnet) {
   console.log("handleDeployingSubnet");
   try {
     const { data } = await axios.get(
-      `https://api.vultr.com/v2/instances/${subnet.serverId}`,
+      `https://api.vultr.com/v2/instances/${subnet.server?.id}`,
       { headers: { Authorization: `Bearer ${process.env.VULTR_API_KEY}` } }
     );
     if (
@@ -90,7 +105,7 @@ async function handleDeployingSubnet(subnet: Subnet) {
     ) {
       updateModel(subnet, {
         status: "DEPLOYED",
-        serverIp: data?.instance?.main_ip,
+        "server.ip": data?.instance?.main_ip,
       });
     }
   } catch (error: any) {
@@ -124,10 +139,10 @@ async function handleDeployedSubnet(subnet: Subnet) {
       });
     })
     .connect({
-      host: subnet.serverIp,
+      host: subnet.server?.ip,
       port: 22,
-      username: subnet.serverUsername,
-      password: subnet.serverPassword,
+      username: subnet.server?.username,
+      password: subnet.server?.password,
     });
 }
 
@@ -167,52 +182,47 @@ async function handleLaunchingSubnet(subnet: Subnet) {
       });
     })
     .connect({
-      host: subnet.serverIp,
+      host: subnet.server?.ip,
       port: 22,
-      username: subnet.serverUsername,
-      password: subnet.serverPassword,
+      username: subnet.server?.username,
+      password: subnet.server?.password,
     });
 }
 
 async function findModel(_id: string): Promise<Subnet | null> {
-  const client = await clientPromise;
-  const db = client.db(process.env.MONGODB_DATABASE as string);
-  return await db
-    .collection(process.env.MONGODB_COLLECTION_SUBNETS as string)
-    .findOne<Subnet>({ _id: new ObjectId(_id) });
+  const collection = await getCollection();
+  return await collection.findOne({ _id: new ObjectId(_id) });
 }
 
 async function findLastNotDeletedModel(): Promise<Subnet | null> {
-  const client = await clientPromise;
-  const db = client.db(process.env.MONGODB_DATABASE as string);
-  return await db
-    .collection(process.env.MONGODB_COLLECTION_SUBNETS as string)
-    .findOne<Subnet>(
-      { status: { $ne: "DELETED" } },
-      { sort: { createdTime: -1 } }
-    );
+  const collection = await getCollection();
+  return await collection.findOne(
+    { status: { $ne: "DELETED" } },
+    { sort: { createdTime: -1 } }
+  );
 }
 
 async function insertModel(subnet: Subnet) {
-  const client = await clientPromise;
-  const db = client.db(process.env.MONGODB_DATABASE as string);
-  await db
-    .collection<Subnet>(process.env.MONGODB_COLLECTION_SUBNETS as string)
-    .insertOne(subnet);
+  const collection = await getCollection();
+  await collection.insertOne(subnet);
 }
 
 async function updateModel(subnet: Subnet, newValues: any) {
+  const collection = await getCollection();
+  await collection.updateOne(
+    { _id: new ObjectId(subnet._id) },
+    {
+      $set: {
+        ...newValues,
+      },
+    }
+  );
+}
+
+async function getCollection(): Promise<Collection<Subnet>> {
   const client = await clientPromise;
   const db = client.db(process.env.MONGODB_DATABASE as string);
-  await db
-    .collection(process.env.MONGODB_COLLECTION_SUBNETS as string)
-    .updateOne(
-      { _id: new ObjectId(subnet._id) },
-      {
-        $set: {
-          status: "DEPLOYED",
-          ...newValues,
-        },
-      }
-    );
+  return db.collection<Subnet>(
+    process.env.MONGODB_COLLECTION_SUBNETS as string
+  );
 }
