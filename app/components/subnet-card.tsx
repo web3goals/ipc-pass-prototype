@@ -1,10 +1,24 @@
 "use client";
 
+import useError from "@/hooks/useError";
+import { getLatestBlocks } from "@/lib/actions";
+import { addressToShortAddress } from "@/lib/converters";
 import Subnet from "@/model/subnet";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Block } from "viem";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 import { Separator } from "./ui/separator";
-import { addressToShortAddress } from "@/lib/converters";
+import { Skeleton } from "./ui/skeleton";
+import { toast } from "./ui/use-toast";
 
 export function SubnetCard(props: { subnet: Subnet }) {
   return (
@@ -21,14 +35,20 @@ export function SubnetCard(props: { subnet: Subnet }) {
 }
 
 function SubnetCardDetails(props: { subnet: Subnet }) {
-  // TODO: Implement
   function AddToMetamaskButton() {
-    return <Button variant="outline">Add to MetaMask</Button>;
+    return (
+      <Link
+        href="https://docs.ipc.space/development-guides/performing-transactions-in-a-subnet"
+        target="_blank"
+      >
+        <Button variant="outline">Add to MetaMask</Button>
+      </Link>
+    );
   }
 
   // TODO: Implement
   function DeleteButton() {
-    return <Button variant="destructive">Delete</Button>;
+    return <Button variant="destructive">Delete Subnet</Button>;
   }
 
   return (
@@ -53,7 +73,9 @@ function SubnetCardDetails(props: { subnet: Subnet }) {
             </p>
           </div>
           <div className="flex flex-col md:flex-row md:gap-3">
-            <p className="min-w-[80px] text-sm text-muted-foreground">RPC:</p>
+            <p className="min-w-[80px] text-sm text-muted-foreground">
+              RPC URL:
+            </p>
             <p className="text-sm break-all">
               http://{props.subnet.server?.ip}:
               {props.subnet.network?.ethApiPort}
@@ -118,9 +140,20 @@ function SubnetCardCreator(props: { subnet: Subnet }) {
 }
 
 function SubnetCardValidators(props: { subnet: Subnet }) {
-  // TODO: Implement
   function AddValidatorButton() {
-    return <Button variant="outline">Add Validator</Button>;
+    return (
+      <Button
+        variant="outline"
+        onClick={() =>
+          toast({
+            title: "Not implemented yet ☹️",
+            description: "This feature will be released in the next version",
+          })
+        }
+      >
+        Add Validator
+      </Button>
+    );
   }
 
   return (
@@ -156,9 +189,60 @@ function SubnetCardValidators(props: { subnet: Subnet }) {
 }
 
 function SubnetCardBlocks(props: { subnet: Subnet }) {
-  // TODO: Implement
+  const { handleError } = useError();
+  const [latestBlocks, setLatestBlocks] = useState<Block[] | undefined>();
+
+  useEffect(() => {
+    getLatestBlocks(props.subnet)
+      .then((latestBlocks) => setLatestBlocks(latestBlocks))
+      .catch((error) => handleError(error, true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function BlockDialog(props: { block: Block }) {
+    return (
+      <Dialog>
+        <DialogTrigger>
+          <a
+            className="text-sm font-medium underline underline-offset-4 cursor-pointer text-secondary-foreground"
+            onClick={() => console.log("here")}
+          >
+            {props.block.number?.toString()}
+          </a>
+        </DialogTrigger>
+        <DialogContent className="max-w-full">
+          <DialogHeader>
+            <DialogTitle>Block #{props.block.number?.toString()}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-2">
+            <pre className="rounded bg-muted max-h-[480px] px-[1rem] py-[0.8rem] font-mono text-sm font-semibold break-all whitespace-pre-wrap overflow-y-scroll">
+              {JSON.stringify(
+                props.block,
+                (key, value) =>
+                  typeof value === "bigint" ? value.toString() : value,
+                2
+              )}
+            </pre>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   function OpenExplorerButton() {
-    return <Button variant="outline">Open Explorer</Button>;
+    return (
+      <Button
+        variant="outline"
+        onClick={() =>
+          toast({
+            title: "Not implemented yet ☹️",
+            description: "This feature will be released in the next version",
+          })
+        }
+      >
+        Open Explorer
+      </Button>
+    );
   }
 
   return (
@@ -172,8 +256,23 @@ function SubnetCardBlocks(props: { subnet: Subnet }) {
       </div>
       {/* Content */}
       <div className="w-full">
-        <p className="text-base font-bold">Blocks</p>
-        <p className="text-sm break-all mt-4">...</p>
+        <p className="text-base font-bold">Latest blocks</p>
+        <div className="flex flex-col items-start gap-3 mt-4">
+          {latestBlocks ? (
+            <>
+              {latestBlocks.map((block, index) => (
+                <BlockDialog key={index} block={block} />
+              ))}
+            </>
+          ) : (
+            <>
+              <Skeleton className="h-[20px]" />
+              <Skeleton className="h-[20px]" />
+              <Skeleton className="h-[20px]" />
+            </>
+          )}
+        </div>
+
         <div className="mt-6">
           <OpenExplorerButton />
         </div>

@@ -4,12 +4,43 @@ import Subnet from "@/model/subnet";
 import axios from "axios";
 import { Collection, ObjectId } from "mongodb";
 import { Client } from "ssh2";
+import { Block, createPublicClient, http } from "viem";
 import clientPromise from "./mongodb";
 
 const COMMAND_LAUCNH_SUBNET =
   "screen -d -m bash -c 'cd /root/ipc/; /root/.cargo/bin/cargo make --makefile infra/fendermint/Makefile.toml -e NODE_NAME=validator-1 -e PRIVATE_KEY_PATH=/root/.ipc/validator_1.sk -e SUBNET_ID=/r314159/t410fop6ro6vv7ikt77stuycnqhuhrpsmpfhrsmm25yq -e CMT_P2P_HOST_PORT=26656 -e CMT_RPC_HOST_PORT=26657 -e ETHAPI_HOST_PORT=8545 -e RESOLVER_HOST_PORT=26655 -e PARENT_GATEWAY=`curl -s https://raw.githubusercontent.com/consensus-shipyard/ipc/cd/contracts/deployments/r314159.json | jq -r '.gateway_addr'` -e PARENT_REGISTRY=`curl -s https://raw.githubusercontent.com/consensus-shipyard/ipc/cd/contracts/deployments/r314159.json | jq -r '.registry_addr'` -e FM_PULL_SKIP=1 child-validator; exec sh'; echo ok";
 const COMMAND_LIST_DOCKER_CONTAINERS =
   "docker ps --format='{{json .}}' | jq . -s";
+
+export async function getLatestBlocks(subnet: Subnet): Promise<Block[]> {
+  console.log("getData()");
+  const publicClient = createPublicClient({
+    chain: {
+      id: Number(subnet.network?.chainId!),
+      name: subnet.label!,
+      nativeCurrency: {
+        decimals: 18,
+        name: "tFIL",
+        symbol: "tFIL",
+      },
+      rpcUrls: {
+        default: {
+          http: [`http://${subnet.server?.ip}:${subnet.network?.ethApiPort}`],
+        },
+      },
+    },
+    transport: http(),
+  });
+  const latestBlockNumber = await publicClient.getBlockNumber();
+  const latestBlocks: Block[] = [];
+  for (let i = 0; i < 5; i++) {
+    const block = await publicClient.getBlock({
+      blockNumber: latestBlockNumber - BigInt(i),
+    });
+    latestBlocks.push(block);
+  }
+  return latestBlocks;
+}
 
 export async function getLastSubnet(): Promise<Subnet | null> {
   console.log("getLastSubnet()");
