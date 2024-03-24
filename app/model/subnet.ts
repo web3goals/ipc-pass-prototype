@@ -5,13 +5,7 @@ import { ObjectId } from "mongodb";
  */
 export default class Subnet {
   constructor(
-    public status:
-      | "NONE"
-      | "DEPLOYING"
-      | "DEPLOYED"
-      | "LAUNCHING"
-      | "RUNNING"
-      | "DELETED",
+    public status: "NONE" | "DEPLOYING" | "LAUNCHING" | "RUNNING" | "DELETED",
     public createdTime: Date,
     public label: string | undefined,
     public server:
