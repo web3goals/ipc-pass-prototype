@@ -58,9 +58,9 @@ export function DashboardSubnetDeployed(props: { subnet: Subnet }) {
             })
           }
         >
-          Deploy
+          Deploy New Subnet
         </Button>
-        <SubnetCard />
+        <SubnetCard subnet={props.subnet} />
       </div>
     </>
   );
