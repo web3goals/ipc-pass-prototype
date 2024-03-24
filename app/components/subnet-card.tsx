@@ -1,12 +1,21 @@
 "use client";
 
 import useError from "@/hooks/useError";
-import { getLatestBlocks } from "@/lib/actions";
+import { deleteSubnet, getLatestBlocks } from "@/lib/actions";
 import { addressToShortAddress } from "@/lib/converters";
 import Subnet from "@/model/subnet";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Block } from "viem";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
@@ -20,10 +29,16 @@ import { Separator } from "./ui/separator";
 import { Skeleton } from "./ui/skeleton";
 import { toast } from "./ui/use-toast";
 
-export function SubnetCard(props: { subnet: Subnet }) {
+export function SubnetCard(props: {
+  subnet: Subnet;
+  onSubnetUpdate: () => void;
+}) {
   return (
     <div className="w-full flex flex-col items-center border rounded px-4 py-4">
-      <SubnetCardDetails subnet={props.subnet} />
+      <SubnetCardDetails
+        subnet={props.subnet}
+        onSubnetUpdate={props.onSubnetUpdate}
+      />
       <Separator className="my-4" />
       <SubnetCardCreator subnet={props.subnet} />
       <Separator className="my-4" />
@@ -34,7 +49,10 @@ export function SubnetCard(props: { subnet: Subnet }) {
   );
 }
 
-function SubnetCardDetails(props: { subnet: Subnet }) {
+function SubnetCardDetails(props: {
+  subnet: Subnet;
+  onSubnetUpdate: () => void;
+}) {
   function AddToMetamaskButton() {
     return (
       <Link
@@ -46,9 +64,44 @@ function SubnetCardDetails(props: { subnet: Subnet }) {
     );
   }
 
-  // TODO: Implement
-  function DeleteButton() {
-    return <Button variant="destructive">Delete Subnet</Button>;
+  function DeleteDialog() {
+    const { handleError } = useError();
+    const [open, setOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    async function onSubmit() {
+      try {
+        setIsSubmitting(true);
+        await deleteSubnet(props.subnet);
+        props.onSubnetUpdate();
+        setOpen(false);
+      } catch (error: any) {
+        handleError(error, true);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+
+    return (
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive">Delete Subnet</Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>
+              Cancel
+            </AlertDialogCancel>
+            <Button disabled={isSubmitting} onClick={() => onSubmit()}>
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
   }
 
   return (
@@ -90,7 +143,7 @@ function SubnetCardDetails(props: { subnet: Subnet }) {
         </div>
         <div className="flex flex-col gap-2 mt-6 md:flex-row">
           <AddToMetamaskButton />
-          <DeleteButton />
+          <DeleteDialog />
         </div>
       </div>
     </div>

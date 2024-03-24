@@ -29,7 +29,12 @@ export function Dashboard() {
   if (subnet === undefined) {
     return <Skeleton className="w-full h-[20px] rounded-full" />;
   } else if (subnet?.status === "RUNNING") {
-    return <DashboardSubnetDeployed subnet={subnet} />;
+    return (
+      <DashboardSubnetDeployed
+        subnet={subnet}
+        onSubnetUpdate={() => loadSubnet()}
+      />
+    );
   } else {
     return (
       <DashboardSubnetNotDeployed
@@ -40,7 +45,10 @@ export function Dashboard() {
   }
 }
 
-export function DashboardSubnetDeployed(props: { subnet: Subnet }) {
+export function DashboardSubnetDeployed(props: {
+  subnet: Subnet;
+  onSubnetUpdate: () => void;
+}) {
   return (
     <>
       <div className="space-y-0.5">
@@ -60,7 +68,10 @@ export function DashboardSubnetDeployed(props: { subnet: Subnet }) {
         >
           Deploy New Subnet
         </Button>
-        <SubnetCard subnet={props.subnet} />
+        <SubnetCard
+          subnet={props.subnet}
+          onSubnetUpdate={props.onSubnetUpdate}
+        />
       </div>
     </>
   );

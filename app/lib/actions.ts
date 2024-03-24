@@ -103,6 +103,24 @@ export async function deploySubnet(label: string) {
   }
 }
 
+export async function deleteSubnet(subnet: Subnet) {
+  console.log("deleteSubnet()");
+  try {
+    // Send request to delete subnet server to Vultr
+    const { data } = await axios.delete(
+      `https://api.vultr.com/v2/instances/${subnet.server?.id}`,
+
+      {
+        headers: { Authorization: `Bearer ${process.env.VULTR_API_KEY}` },
+      }
+    );
+    // Delete subnet in database
+    await updateModel(subnet, { status: "DELETED" });
+  } catch (error: any) {
+    console.error(error);
+  }
+}
+
 /**
  * Process subnet depending on its status.
  */
