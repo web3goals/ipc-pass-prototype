@@ -140,6 +140,12 @@ function SubnetCardDetails(props: {
             </p>
             <p className="text-sm break-all">{props.subnet.network?.chainId}</p>
           </div>
+          <div className="flex flex-col md:flex-row md:gap-3">
+            <p className="min-w-[80px] text-sm text-muted-foreground">
+              Currency Symbol:
+            </p>
+            <p className="text-sm break-all">tFIL</p>
+          </div>
         </div>
         <div className="flex flex-col gap-2 mt-6 md:flex-row">
           <AddToMetamaskButton />
