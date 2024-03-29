@@ -45,6 +45,7 @@ export async function deploySubnet(label: string) {
         plan: "vc2-1c-2gb",
         snapshot_id: "10aadb64-7f42-492e-80f9-5f4f0d08173e",
         label: "IPC Server",
+        activation_email: true,
       },
       {
         headers: { Authorization: `Bearer ${process.env.VULTR_API_KEY}` },
