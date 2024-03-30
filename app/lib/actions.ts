@@ -107,10 +107,10 @@ export async function handleSubnet(_id: string) {
   console.log("handleSubnet()");
   const subnet = await findModel(_id);
   if (subnet?.status === "DEPLOYING") {
-    handleDeployingSubnet(subnet);
+    await handleDeployingSubnet(subnet);
   }
   if (subnet?.status === "LAUNCHING") {
-    handleLaunchingSubnet(subnet);
+    await handleLaunchingSubnet(subnet);
   }
 }
 
@@ -128,7 +128,7 @@ async function handleDeployingSubnet(subnet: Subnet) {
       data?.instance?.status === "active" &&
       data?.instance?.server_status === "ok"
     ) {
-      updateModel(subnet, {
+      await updateModel(subnet, {
         status: "LAUNCHING",
         "server.ip": data?.instance?.main_ip,
       });
@@ -146,7 +146,7 @@ async function handleLaunchingSubnet(subnet: Subnet) {
   try {
     const latestBlockNumber = await getPublicClient(subnet).getBlockNumber();
     if (latestBlockNumber > 0) {
-      updateModel(subnet, { status: "RUNNING" });
+      await updateModel(subnet, { status: "RUNNING" });
     }
   } catch (error: any) {
     console.error(error);

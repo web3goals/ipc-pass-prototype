@@ -1,7 +1,10 @@
 "use client";
 
 import useError from "@/hooks/useError";
-import { deploySubnet, handleSubnet } from "@/lib/actions";
+import {
+  deploySubnet,
+  handleSubnet as handleSubnetAction,
+} from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import Subnet from "@/model/subnet";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -74,35 +77,37 @@ export function SubnetDeployForm(props: {
         throw new Error("Subnet is not null");
       }
       await deploySubnet(values.label);
+      props.reloadSubnet();
     } catch (error: any) {
       handleError(error, true);
       setIsFormSubmitting(false);
     }
   }
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      console.log("reloadSubnet()");
-      props.reloadSubnet();
-    }, 30 * 1000);
-    return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  async function handleSubnet() {
+    try {
+      console.log(`handleSubnet(), subnet ID: ${props.subnet?._id}`);
+      if (props.subnet?._id) {
+        await handleSubnetAction(props.subnet._id.toString());
+        props.reloadSubnet();
+      }
+    } catch (error: any) {
+      handleError(error, true);
+    }
+  }
 
   useEffect(() => {
+    // Handle subnet
+    handleSubnet();
+    // Run interval with function to handle subnet
     let intervalId: NodeJS.Timeout;
-    const intervalCallback = () => {
-      if (props.subnet?._id) {
-        console.log("handleSubnet()");
-        handleSubnet(props.subnet._id.toString());
-      }
-    };
     const clearAndSetInterval = () => {
       clearInterval(intervalId);
-      intervalId = setInterval(intervalCallback, 60 * 1000);
+      intervalId = setInterval(handleSubnet, 30 * 1000);
     };
     clearAndSetInterval();
     return () => clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.subnet?._id]);
 
   return (
@@ -138,6 +143,7 @@ export function SubnetDeployForm(props: {
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
+                  disabled={isFormSubmitting}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -170,6 +176,7 @@ export function SubnetDeployForm(props: {
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
+                  disabled={isFormSubmitting}
                 >
                   <FormControl>
                     <SelectTrigger>

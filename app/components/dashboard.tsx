@@ -16,6 +16,7 @@ export function Dashboard() {
   const [subnet, setSubnet] = useState<Subnet | null>();
 
   function loadSubnet() {
+    console.log("loadSubnet()");
     getLastSubnet()
       .then((subnet) => setSubnet(subnet))
       .catch((error) => handleError(error, true));
