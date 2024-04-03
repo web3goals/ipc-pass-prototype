@@ -10,6 +10,8 @@ import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import { Skeleton } from "./ui/skeleton";
 import { toast } from "./ui/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Terminal, TriangleAlert } from "lucide-react";
 
 export function Dashboard() {
   const { handleError } = useError();
@@ -56,6 +58,13 @@ export function DashboardSubnetDeployed(props: {
         <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
         <p className="text-muted-foreground">Manage your IPC subnet</p>
       </div>
+      <Alert className="mt-6">
+        <TriangleAlert className="h-4 w-4" />
+        <AlertTitle>Dear testers!</AlertTitle>
+        <AlertDescription>
+          For development purposes, subnets may be deleted after some time.
+        </AlertDescription>
+      </Alert>
       <Separator className="my-6" />
       <div className="flex flex-col items-start gap-4">
         <Button
@@ -88,6 +97,13 @@ export function DashboardSubnetNotDeployed(props: {
         <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
         <p className="text-muted-foreground">Deploy your first IPC subnet</p>
       </div>
+      <Alert className="mt-6">
+        <TriangleAlert className="h-4 w-4" />
+        <AlertTitle>Dear testers!</AlertTitle>
+        <AlertDescription>
+          For development purposes, subnets may be deleted after some time.
+        </AlertDescription>
+      </Alert>
       <Separator className="my-6" />
       <SubnetDeployForm
         subnet={props.subnet}
